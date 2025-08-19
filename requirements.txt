@@ -2,3 +2,7 @@ streamlit
 torch
 transformers
 nltk
+sumy
+numpy
+pandas
+scikit-learn
