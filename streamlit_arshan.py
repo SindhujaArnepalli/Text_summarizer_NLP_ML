@@ -19,9 +19,12 @@ model_name = "facebook/bart-large-cnn"
 tokenizer = BartTokenizer.from_pretrained(model_name)
 model = BartForConditionalGeneration.from_pretrained(
     model_name,
-    torch_dtype="float32",   # Force real tensors
-    device_map=None          # Prevent accidental meta device mapping
+    torch_dtype=torch.float32,   # ensure real tensors
+    device_map=None              # prevent meta device
 )
+
+device = torch.device("cpu")
+model.to(device)
 
 st.title("Customer Review Summarizer")
 
@@ -29,22 +32,22 @@ st.title("Customer Review Summarizer")
 review = st.text_area("Enter customer review here:")
 
 def bart_summary(text):
-    inputs = tokenizer([text], max_length=1024, return_tensors="pt", truncation=True)
-   summary_ids = model.generate(
-    input_ids=inputs["input_ids"],
-    attention_mask=inputs["attention_mask"], 
-    num_beams=4,
-    max_length=150,
-    min_length=40,
-    early_stopping=True
-)
+    inputs = tokenizer([text], max_length=1024, return_tensors="pt", truncation=True).to(device)
+    summary_ids = model.generate(
+        input_ids=inputs["input_ids"],
+        attention_mask=inputs["attention_mask"],
+        num_beams=4,
+        max_length=150,
+        min_length=40,
+        early_stopping=True
+    )
+    return tokenizer.decode(summary_ids[0], skip_special_tokens=True)
 
 def textrank_summary(text, sentences_count=2):
     parser = PlaintextParser.from_string(text, Tokenizer("english"))
     summarizer = TextRankSummarizer()
     summary = summarizer(parser.document, sentences_count)
     return " ".join([str(sentence) for sentence in summary])
-
 
 if st.button("Summarize"):
     if review.strip():
@@ -56,7 +59,3 @@ if st.button("Summarize"):
 
         st.subheader("🔹 TextRank Summary (Extractive)")
         st.write(textrank_result)
-        
-device = torch.device("cpu")   # or "cuda" if you have GPU
-
-model.to(device)
