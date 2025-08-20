@@ -3,7 +3,7 @@ import torch
 from transformers import BartTokenizer, BartForConditionalGeneration
 import nltk
 
-# Ensure punkt is available (sumy needs only 'punkt')
+# Ensure punkt is available for TextRank (via sumy)
 try:
     nltk.data.find("tokenizers/punkt")
 except LookupError:
@@ -15,35 +15,25 @@ from sumy.summarizers.text_rank import TextRankSummarizer
 
 st.title("Customer Review Summarizer")
 
-# ---- Load model/tokenizer on CPU, avoiding meta tensors ----
+# ---- Load BART directly on CPU to avoid meta tensor issue ----
 MODEL_NAME = "facebook/bart-large-cnn"
 tokenizer = BartTokenizer.from_pretrained(MODEL_NAME)
-
-# Key fixes:
-# 1) low_cpu_mem_usage=False -> prevents meta initialization
-# 2) map_location="cpu"       -> ensure weights land on CPU
-# 3) do NOT pass device_map="auto" (can trigger meta in some combos)
 model = BartForConditionalGeneration.from_pretrained(
     MODEL_NAME,
-    low_cpu_mem_usage=False,
-    torch_dtype=torch.float32
+    torch_dtype=torch.float32,
+    low_cpu_mem_usage=False,     # force real tensors
+    device_map={"": "cpu"}       # load weights directly on CPU
 )
-device = torch.device("cpu")
-model.to(device)
 model.eval()
 
-# ---- UI ----
-review = st.text_area("Enter customer review here:")
-
+# ---- Summarizer functions ----
 def bart_summary(text: str) -> str:
     inputs = tokenizer(
         [text],
         max_length=1024,
         truncation=True,
         return_tensors="pt"
-    )
-    # move Tensors to same device as model
-    inputs = {k: v.to(device) for k, v in inputs.items()}
+    ).to("cpu")
 
     with torch.no_grad():
         summary_ids = model.generate(
@@ -62,17 +52,19 @@ def textrank_summary(text: str, sentences_count: int = 2) -> str:
     summary = summarizer(parser.document, sentences_count)
     return " ".join(str(s) for s in summary)
 
+# ---- UI ----
+review = st.text_area("Enter customer review here:")
+
 if st.button("Summarize"):
     text = (review or "").strip()
     if not text:
-        st.warning("Please paste a review first.")
+        st.warning("Please enter a review first.")
     else:
-        # Run BART safely; fall back to TextRank if anything fails
         bart_result = None
         try:
             bart_result = bart_summary(text)
         except Exception as e:
-            st.error(f"BART failed: {e}")
+            st.error(f"BART summarizer failed: {e}")
 
         textrank_result = textrank_summary(text)
 
