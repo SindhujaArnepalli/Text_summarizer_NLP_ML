@@ -31,14 +31,12 @@ review = st.text_area("Enter customer review here:")
 def bart_summary(text):
     inputs = tokenizer([text], max_length=1024, return_tensors="pt", truncation=True)
     summary_ids = model.generate(
-    input_ids=inputs["input_ids"],
-    attention_mask=inputs["attention_mask"], 
-    num_beams=4,
-    max_length=150,
-    min_length=40,
-    early_stopping=True
-)
-
+        inputs["input_ids"], 
+        num_beams=4, 
+        max_length=150, 
+        early_stopping=True
+    )
+    return tokenizer.decode(summary_ids[0], skip_special_tokens=True)
 def textrank_summary(text, sentences_count=2):
     parser = PlaintextParser.from_string(text, Tokenizer("english"))
     summarizer = TextRankSummarizer()
@@ -58,6 +56,4 @@ if st.button("Summarize"):
         st.write(textrank_result)
         
 device = torch.device("cpu")   # or "cuda" if you have GPU
-
 model.to(device)
-
