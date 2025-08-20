@@ -21,10 +21,10 @@ tokenizer = BartTokenizer.from_pretrained(MODEL_NAME)
 model = BartForConditionalGeneration.from_pretrained(
     MODEL_NAME,
     torch_dtype=torch.float32,
-    low_cpu_mem_usage=False,     # force real tensors
-    device_map={"": "cpu"}       # load weights directly on CPU
+    low_cpu_mem_usage=False
 )
-model.eval()
+model.to("cpu")
+
 
 # ---- Summarizer functions ----
 def bart_summary(text: str) -> str:
@@ -74,3 +74,4 @@ if st.button("Summarize"):
 
         st.subheader("🔹 TextRank Summary (Extractive)")
         st.write(textrank_result)
+
