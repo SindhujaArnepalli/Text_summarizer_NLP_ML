@@ -30,7 +30,7 @@ review = st.text_area("Enter customer review here:")
 
 def bart_summary(text):
     inputs = tokenizer([text], max_length=1024, return_tensors="pt", truncation=True)
-   summary_ids = model.generate(
+    summary_ids = model.generate(
     input_ids=inputs["input_ids"],
     attention_mask=inputs["attention_mask"], 
     num_beams=4,
@@ -60,3 +60,4 @@ if st.button("Summarize"):
 device = torch.device("cpu")   # or "cuda" if you have GPU
 
 model.to(device)
+
