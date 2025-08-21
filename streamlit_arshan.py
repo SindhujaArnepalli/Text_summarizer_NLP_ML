@@ -19,7 +19,7 @@ model_name = "facebook/bart-large-cnn"
 tokenizer = BartTokenizer.from_pretrained(model_name)
 model = BartForConditionalGeneration.from_pretrained(
     model_name,
-    torch_dtype="float32",  # Force real tensors
+    torch_dtype=torch.float32,   # Force real tensors
     device_map=None          # Prevent accidental meta device mapping
 )
 
@@ -57,5 +57,6 @@ if st.button("Summarize"):
         
 device = torch.device("cpu")   # or "cuda" if you have GPU
 model.to(device)
+
 
 
