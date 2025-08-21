@@ -8,23 +8,20 @@ try:
     nltk.data.find("tokenizers/punkt")
 except LookupError:
     nltk.download("punkt")
-    nltk.download("punkt_tab")  # new versions need this
+    nltk.download("punkt_tab")  # for latest versions
 
 from sumy.parsers.plaintext import PlaintextParser
 from sumy.nlp.tokenizers import Tokenizer
 from sumy.summarizers.text_rank import TextRankSummarizer
 
-# Load model safely (avoid meta tensors)
+# Load model
 model_name = "facebook/bart-large-cnn"
 tokenizer = BartTokenizer.from_pretrained(model_name)
-
-# Force proper load on CPU/GPU
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 model = BartForConditionalGeneration.from_pretrained(
     model_name,
-    torch_dtype=torch.float32,   # ensure real tensors
-    low_cpu_mem_usage=False      # avoid lazy meta loading
-).to(device)
+    torch_dtype="float32",   # Force real tensors
+    device_map=None          # Prevent accidental meta device mapping
+)
 
 st.title("Customer Review Summarizer")
 
@@ -32,7 +29,7 @@ st.title("Customer Review Summarizer")
 review = st.text_area("Enter customer review here:")
 
 def bart_summary(text):
-    inputs = tokenizer([text], max_length=1024, return_tensors="pt", truncation=True).to(device)
+    inputs = tokenizer([text], max_length=1024, return_tensors="pt", truncation=True)
     summary_ids = model.generate(
         inputs["input_ids"], 
         num_beams=4, 
@@ -40,12 +37,12 @@ def bart_summary(text):
         early_stopping=True
     )
     return tokenizer.decode(summary_ids[0], skip_special_tokens=True)
-
 def textrank_summary(text, sentences_count=2):
     parser = PlaintextParser.from_string(text, Tokenizer("english"))
     summarizer = TextRankSummarizer()
     summary = summarizer(parser.document, sentences_count)
     return " ".join([str(sentence) for sentence in summary])
+
 
 if st.button("Summarize"):
     if review.strip():
@@ -57,3 +54,6 @@ if st.button("Summarize"):
 
         st.subheader("🔹 TextRank Summary (Extractive)")
         st.write(textrank_result)
+        
+device = torch.device("cpu")   # or "cuda" if you have GPU
+model.to(device)
