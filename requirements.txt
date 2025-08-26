@@ -1,7 +1,9 @@
 streamlit
 nltk
+sumy
 torch
 transformers
 sentencepiece
 protobuf
+
 
