@@ -1,7 +1,7 @@
-streamlit
-nltk
-sumy
-torch
-transformers
-sentencepiece
-protobuf
+streamlit==1.37.1
+nltk==3.8.1
+sumy==0.11.0
+torch==2.2.2
+transformers==4.41.2
+sentencepiece==0.2.0
+protobuf==4.25.3
