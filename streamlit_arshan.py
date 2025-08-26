@@ -1,6 +1,6 @@
 import streamlit as st
-from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
-import torch
+from transformers import BartTokenizer, BartForConditionalGeneration
+import torch 
 import nltk
 
 # Ensure punkt is available
@@ -14,53 +14,35 @@ from sumy.parsers.plaintext import PlaintextParser
 from sumy.nlp.tokenizers import Tokenizer
 from sumy.summarizers.text_rank import TextRankSummarizer
 
+# Load model
+model_name = "facebook/bart-large-cnn"
+tokenizer = BartTokenizer.from_pretrained(model_name)
+model = BartForConditionalGeneration.from_pretrained(
+    model_name,
+    torch_dtype="float32",   # Force real tensors
+    device_map=None          # Prevent accidental meta device mapping
+)
 
-# -----------------------------
-# MODEL LOADING (cached)
-# -----------------------------
-MODEL_NAME = "sshleifer/distilbart-cnn-12-6"  # ✅ lightweight version
+st.title("Customer Review Summarizer")
 
-@st.cache_resource
-def load_model():
-    tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
-    model = AutoModelForSeq2SeqLM.from_pretrained(
-        MODEL_NAME,
-        torch_dtype=torch.float32
-    )
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    model.to(device)
-    return tokenizer, model, device
+# User input
+review = st.text_area("Enter customer review here:")
 
-tokenizer, model, device = load_model()
-
-
-# -----------------------------
-# SUMMARIZATION FUNCTIONS
-# -----------------------------
 def bart_summary(text):
-    inputs = tokenizer([text], max_length=1024, return_tensors="pt", truncation=True).to(device)
+    inputs = tokenizer([text], max_length=1024, return_tensors="pt", truncation=True)
     summary_ids = model.generate(
-        inputs["input_ids"],
-        num_beams=4,
-        max_length=150,
-        min_length=30,
+        inputs["input_ids"], 
+        num_beams=4, 
+        max_length=150, 
         early_stopping=True
     )
     return tokenizer.decode(summary_ids[0], skip_special_tokens=True)
-
 def textrank_summary(text, sentences_count=2):
     parser = PlaintextParser.from_string(text, Tokenizer("english"))
     summarizer = TextRankSummarizer()
     summary = summarizer(parser.document, sentences_count)
     return " ".join([str(sentence) for sentence in summary])
 
-
-# -----------------------------
-# STREAMLIT APP
-# -----------------------------
-st.title("Customer Review Summarizer 📝")
-
-review = st.text_area("Enter customer review here:")
 
 if st.button("Summarize"):
     if review.strip():
@@ -72,5 +54,6 @@ if st.button("Summarize"):
 
         st.subheader("🔹 TextRank Summary (Extractive)")
         st.write(textrank_result)
-    else:
-        st.warning("Please enter some text first.")
+        
+device = torch.device("cpu")   # or "cuda" if you have GPU
+model.to(device)
