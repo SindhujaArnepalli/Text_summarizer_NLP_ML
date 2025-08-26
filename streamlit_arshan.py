@@ -14,14 +14,17 @@ from sumy.parsers.plaintext import PlaintextParser
 from sumy.nlp.tokenizers import Tokenizer
 from sumy.summarizers.text_rank import TextRankSummarizer
 
-# Load model
+
+
 model_name = "facebook/bart-large-cnn"
 tokenizer = BartTokenizer.from_pretrained(model_name)
+
 model = BartForConditionalGeneration.from_pretrained(
     model_name,
-    torch_dtype="float32",   # Force real tensors
-    device_map=None          # Prevent accidental meta device mapping
+    torch_dtype=torch.float32,   # ✅ use torch.float32
+    device_map=None
 )
+
 
 st.title("Customer Review Summarizer")
 
@@ -57,3 +60,4 @@ if st.button("Summarize"):
         
 device = torch.device("cpu")   # or "cuda" if you have GPU
 model.to(device)
+
