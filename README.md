@@ -15,4 +15,4 @@ Interactive UI powered by Streamlit.
 
 Supports real-time summarization in the browser.
 
-link -- https://textsummarizer-nlp-ml-arnepallisindhuja.streamlit.app/
+link -- [https://textsummarizer-nlp-ml-arnepallisindhuja.streamlit.app/](https://text-summarization-ml-qccmfysofteyq2olbt8xs6.streamlit.app/)
