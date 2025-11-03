@@ -15,4 +15,6 @@ Interactive UI powered by Streamlit.
 
 Supports real-time summarization in the browser.
 
+Google Colab -- https://colab.research.google.com/drive/129T6TJVzRNcYQog07LqZDTmWDXKfkC6L?usp=sharing
+
 link -- [https://textsummarizer-nlp-ml-arnepallisindhuja.streamlit.app/](https://text-summarization-ml-qccmfysofteyq2olbt8xs6.streamlit.app/)
